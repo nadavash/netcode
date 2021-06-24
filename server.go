@@ -11,6 +11,8 @@ import (
 const TIMEOUT_SECONDS = 5 // default timeout for clients
 const MAX_SERVER_PACKETS = 64
 
+type ClientUpdateFn func(clientId uint64)
+
 type Server struct {
 	serverConn       *NetcodeConn
 	serverAddr       *net.UDPAddr
@@ -36,6 +38,10 @@ type Server struct {
 
 	recvBytes int
 	packetCh  chan *NetcodeData
+
+	// events to listen to
+	onClientConnectedFn    ClientUpdateFn
+	onClientDisconnectedFn ClientUpdateFn
 }
 
 func NewServer(serverAddress *net.UDPAddr, privateKey []byte, protocolId uint64, maxClients int) *Server {
@@ -164,6 +170,9 @@ func (s *Server) DisconnectClient(clientId uint64, sendDisconnect bool) error {
 		return err
 	}
 
+	if s.onClientConnectedFn != nil {
+		s.onClientDisconnectedFn(client)
+	}
 	s.clientManager.DisconnectClient(clientIndex, sendDisconnect, s.serverTime)
 	return nil
 }
@@ -248,6 +257,9 @@ func (s *Server) processPacket(clientIndex, encryptionIndex int, packet Packet, 
 		if !client.confirmed {
 			client.confirmed = true
 			log.Printf("server confirmed connection to client %d:%s\n", client.clientId, client.address.String())
+			if s.onClientConnectedFn != nil {
+				s.onClientConnectedFn(client.clientId)
+			}
 		}
 	case ConnectionPayload:
 		if clientIndex == -1 {
@@ -259,6 +271,9 @@ func (s *Server) processPacket(clientIndex, encryptionIndex int, packet Packet, 
 		if !client.confirmed {
 			client.confirmed = true
 			log.Printf("server confirmed connection to client %d:%s\n", client.clientId, client.address.String())
+			if s.onClientConnectedFn != nil {
+				s.onClientConnectedFn(client.clientId)
+			}
 		}
 
 		client.packetQueue.Push(packet)
@@ -268,7 +283,7 @@ func (s *Server) processPacket(clientIndex, encryptionIndex int, packet Packet, 
 		}
 		client := s.clientManager.instances[clientIndex]
 		log.Printf("server received disconnect packet from client %d:%s\n", client.clientId, client.address.String())
-		s.clientManager.disconnectClient(client, false, s.serverTime)
+		s.DisconnectClient(client.clientId, false)
 	}
 }
 
@@ -515,6 +530,14 @@ func (s *Server) RecvPayload(clientIndex int) ([]byte, uint64) {
 		return []byte{}, 0
 	}
 	return p.PayloadData, p.sequence
+}
+
+func (s *Server) SetOnClientConnectedFn(fn ClientUpdateFn) {
+	s.onClientConnectedFn = fn
+}
+
+func (s *Server) SetOnClientDisconnectedFn(fn ClientUpdateFn) {
+	s.onClientDisconnectedFn = fn
 }
 
 func addressEqual(addr1, addr2 *net.UDPAddr) bool {
