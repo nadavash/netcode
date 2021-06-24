@@ -1,4 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/wirepair/netcode?status.svg)](http://godoc.org/github.com/wirepair/netcode) [![Build Status](https://travis-ci.org/wirepair/netcode.svg?branch=master)](https://travis-ci.org/wirepair/netcode)
+[![GoDoc](https://godoc.org/github.com/nadavash/netcode?status.svg)](http://godoc.org/github.com/nadavash/netcode) [![Build Status](https://travis-ci.org/nadavash/netcode.svg?branch=master)](https://travis-ci.org/nadavash/netcode)
 
 Go implementation of netcode.io
 ===============================

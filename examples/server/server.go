@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/wirepair/netcode"
+	"github.com/nadavash/netcode"
 	//"github.com/pkg/profile"
 	"log"
 	"net"

@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/wirepair/netcode"
+	"github.com/nadavash/netcode"
 )
 
 var totalPayloadCount uint64
